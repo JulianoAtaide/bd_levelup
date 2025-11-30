@@ -1,0 +1,135 @@
+CREATE TABLE CLIENTE (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    idade INT NOT NULL,
+    saldo_prepago NUMERIC(6, 2) NOT NULL
+);
+
+CREATE TABLE ESTACAO (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    maquina INT NOT NULL,
+    taxa_hora NUMERIC(5, 2) NOT NULL,
+    status VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE PRODUTO (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    preco NUMERIC(6, 2) NOT NULL,
+    estoque INTEGER NOT NULL
+);
+
+CREATE TABLE SESSAO (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT NOT NULL,
+    estacao_id INT NOT NULL,
+    hora_inicio DATETIME NOT NULL,
+    hora_fim DATETIME, -- hora_fim é NULL se estiver em andamento.
+    valor_total NUMERIC(10, 2),
+    FOREIGN KEY (cliente_id) REFERENCES CLIENTE(id),
+    FOREIGN KEY (estacao_id) REFERENCES ESTACAO(id)
+);
+
+CREATE TABLE COMPRA (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    sessao_id INT NOT NULL,
+    quantidade INT NOT NULL,
+    valor_total NUMERIC(10, 2) NOT NULL,
+    FOREIGN KEY (cliente_id) REFERENCES CLIENTE(id),
+    FOREIGN KEY (produto_id) REFERENCES PRODUTO(id),
+    FOREIGN KEY (sessao_id) REFERENCES SESSAO(id)
+);
+
+INSERT INTO CLIENTE (nome, idade, saldo_prepago) VALUES
+('Pedro Paulo', 15, 2.00),
+('Maria Dolores', 39, 15.00),
+('João Morgado', 25, 2.50),
+('Mattew Oliveira', 13, 21.00),
+('Ede Black', 26, 6.00),
+('Priscila Amorim', 15, 9.50);
+
+INSERT INTO ESTACAO (maquina, taxa_hora, status) VALUES
+(1, 2.00, 'Livre'),
+(2, 2.00, 'Livre'),
+(3, 2.00, 'Ocupada'),
+(4, 2.00, 'Livre'),
+(5, 2.00, 'Livre'),
+(6, 2.00, 'Manutencao');
+
+INSERT INTO PRODUTO (nome, preco, estoque) VALUES
+('Refrigerante Cola 350ml', 3.50, 50), -- ID 1
+('Salgadinho Doritos', 7.00, 30), -- ID 2
+('Bala 7belo', 0.50, 220), -- ID 3
+('Biscoito Trakinas', 2.00, 49); -- ID 4
+
+-- Sessão 1: Sessão finalizada (ID 1)
+INSERT INTO SESSAO (cliente_id, estacao_id, hora_inicio, hora_fim, valor_total) VALUES
+(1, 2, '2025-11-30 08:00:00', '2025-11-30 09:30:00', 3.00);
+
+-- Sessão 2: Sessão em andamento (ID 2)
+INSERT INTO SESSAO (cliente_id, estacao_id, hora_inicio, valor_total) VALUES
+(2, 3, '2025-11-30 10:45:00', 0.00); -- hora_fim é NULL se estiver em andamento.
+
+-- Compra 1: Cliente 1 comprou 2 Refrigerantes (ID Produto 1) durante a Sessão 1
+INSERT INTO COMPRA (cliente_id, produto_id, quantidade, sessao_id, valor_total) VALUES
+(1, 1, 2, 1, 7.00);
+
+-- Compra 2: Cliente 2 comprou 1 Salgadinho (ID Produto 2) durante a Sessão 2
+INSERT INTO COMPRA (cliente_id, produto_id, quantidade, sessao_id, valor_total) VALUES
+(2, 2, 1, 2, 7.00);
+
+
+-- COMANDOS DE UPDATE
+
+-- UPDATE 1: Registrar o fechamento de uma sessão em andamento (ID 2 - Maria Dolores)
+-- O sistema calcula a duração e define o valor total da sessão.
+UPDATE SESSAO
+SET 
+    hora_fim = NOW(), -- Define a hora atual como hora de término
+    valor_total = 2.00 -- Valor total calculado para esta sessão
+WHERE 
+    id = 2 AND hora_fim IS NULL; -- Condição: Apenas se a sessão estiver ativa (hora_fim NULL)
+
+
+-- UPDATE 2: Aumentar o saldo pré-pago de clientes menores de idade
+-- Aplicar um bônus de R$ 5,00 no saldo de clientes com menos de 18 anos.
+UPDATE CLIENTE
+SET 
+    saldo_prepago = saldo_prepago + 3.00
+WHERE 
+    idade < 18;
+
+
+-- UPDATE 3: Alterar o preço de um produto específico (Biscoito Trakinas - ID 4)
+-- Aumentar o preço do biscoito de 2.00 para 2.50.
+UPDATE PRODUTO
+SET 
+    preco = 2.50
+WHERE 
+    id = 4 AND nome = 'Biscoito Trakinas';
+    
+    
+-- COMANDOS DE DELETE
+
+-- DELETE 1: Remover o registro de uma compra antiga de um produto específico
+-- (Remove a compra de Salgadinho Doritos - ID 2)
+DELETE FROM COMPRA
+WHERE 
+    produto_id = 2 AND valor_total = 7.00;
+
+
+-- DELETE 2: Remover uma estação que está em manutenção e não será mais usada
+-- (ID 6 - Manutencao). Este comando exige que não haja sessões ativas
+DELETE FROM ESTACAO
+WHERE 
+    id = 6 AND status = 'Manutencao';
+
+
+-- DELETE 3: Remover clientes com saldo zero e que não são menores de idade
+-- (Remove clientes adultos que nunca usaram o saldo pré-pago)
+DELETE FROM CLIENTE
+WHERE 
+    idade >= 18 
+    AND saldo_prepago = 0.00;
