@@ -22,7 +22,7 @@ O Modelo Lógico é baseado em cinco entidades principais: **CLIENTE, ESTAÇÃO,
 3.  **`dml_queries.sql`**: Roda consultas para extrair informações gerenciais (ex: gasto total por cliente, ocupação).
 4.  **`dml_manipulation.sql`**: Roda comandos de `UPDATE` e `DELETE` para testar a manutenção do sistema.
 
-## 3. 🔎 Scripts DML Entregues
+## 3. Scripts DML Entregues
 
 | Script | Funcionalidade Demonstrada | Exemplo de Comando Usado |
 | :--- | :--- | :--- |
